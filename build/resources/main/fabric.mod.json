@@ -4,7 +4,7 @@
   "version": "${mod_version}",
   "name": "Chat Translator",
   "description": "Translate chat messages using an external API. Click the 🌐 icon next to any message to translate it.",
-  "authors": ["nathmen12"],
+  "authors": ["Nathmen12"],
   "contact": {
     "homepage": "https://github.com/NathMen12/Translator-Mod",
     "sources": "https://github.com/NathMen12/Translator-Mod",
@@ -18,9 +18,6 @@
       "com.nathmen12.translator.TranslatorMod"
     ]
   },
-  "mixins": [
-    "translator.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=0.16.10",
     "minecraft": "~1.21.1",
