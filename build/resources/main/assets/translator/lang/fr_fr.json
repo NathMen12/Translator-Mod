@@ -1,0 +1,21 @@
+{
+  "translator.tooltip.translate": "Cliquer pour traduire",
+  "translator.tooltip.translated": "Message traduit (survoler pour l'original)",
+  "translator.config.title": "Configuration du Traducteur de Chat",
+  "translator.config.footer": "Traduire les messages du chat via une API externe. Cliquez sur l'icône 🌐 à côté des messages pour les traduire.",
+  "translator.config.category.general": "Général",
+  "translator.config.category.api": "Paramètres API",
+  "translator.config.category.display": "Affichage",
+  "translator.config.enabled": "Activer le Mod",
+  "translator.config.targetLanguage": "Langue Cible",
+  "translator.config.showButtonOnHover": "Afficher le Bouton Traduction au Survol",
+  "translator.config.autoTranslate": "Traduction Automatique",
+  "translator.config.apiBaseUrl": "URL de Base de l'API",
+  "translator.config.apiTimeout": "Délai de Requête (secondes)",
+  "translator.config.maxTextLength": "Longueur Maximale du Texte",
+  "translator.config.showOriginalInTooltip": "Afficher le Texte Original dans l'Infobulle",
+  "translator.config.showSourceLanguage": "Afficher la Langue Source dans l'Infobulle",
+  "translator.config.showDuration": "Afficher la Durée de Traduction",
+  "translator.config.translateButtonColor": "Couleur du Bouton Traduction",
+  "translator.config.translatedIconColor": "Couleur de l'Icône Traduit"
+}

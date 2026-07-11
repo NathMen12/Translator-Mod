@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "translator",
+  "version": "${mod_version}",
+  "name": "Chat Translator",
+  "description": "Translate chat messages using an external API. Click the 🌐 icon next to any message to translate it.",
+  "authors": ["nathmen12"],
+  "contact": {
+    "homepage": "https://github.com/NathMen12/Translator-Mod",
+    "sources": "https://github.com/NathMen12/Translator-Mod",
+    "issues": "https://github.com/NathMen12/Translator-Mod/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/translator/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.nathmen12.translator.TranslatorMod"
+    ]
+  },
+  "mixins": [
+    "translator.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "cloth-config": ">=15.0.0"
+  },
+  "suggests": {
+    "modmenu": ">=10.0.0"
+  }
+}

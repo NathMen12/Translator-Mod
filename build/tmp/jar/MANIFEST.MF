@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Fabric-Mod: fabric.mod.json
+Main-Class: com.nathmen12.translator.TranslatorMod
+Implementation-Title: translator
+Implementation-Version: 1.0.0
+Implementation-Vendor: nathmen12
+
