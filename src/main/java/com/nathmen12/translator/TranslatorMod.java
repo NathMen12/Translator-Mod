@@ -33,10 +33,10 @@ public class TranslatorMod implements ClientModInitializer {
         // Initialiser le handler de chat
         chatHandler = new ChatMessageHandler();
 
-        // Enregistrer l'event de réception de message chat (permet de modifier/annuler le message)
-        // L'interface attend: (Text, SignedMessage, GameProfile, Parameters, Instant) -> boolean
-        ClientReceiveMessageEvents.ALLOW_CHAT.register(chatHandler::allowReceiveChatMessage);
-        ClientReceiveMessageEvents.ALLOW_GAME.register(chatHandler::allowReceiveGameMessage);
+        // Enregistrer l'event de réception de message chat (lecture seule)
+        // On laisse le message passer, puis on remplace le dernier message via réflexion
+        ClientReceiveMessageEvents.CHAT.register(chatHandler::onReceiveChatMessage);
+        ClientReceiveMessageEvents.GAME.register(chatHandler::onReceiveGameMessage);
 
         // Enregistrer la commande /translator
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> TranslatorCommand.register(dispatcher));

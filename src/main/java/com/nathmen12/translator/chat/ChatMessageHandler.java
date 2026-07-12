@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public class ChatMessageHandler implements ClientReceiveMessageEvents.AllowChat, ClientReceiveMessageEvents.AllowGame {
+public class ChatMessageHandler implements ClientReceiveMessageEvents.AllowChat, ClientReceiveMessageEvents.Game {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatMessageHandler.class);
     private static final String TRANSLATE_COMMAND_PREFIX = "/translator translate ";
     private static final String TRANSLATE_ICON = "🌐";
@@ -30,7 +30,7 @@ public class ChatMessageHandler implements ClientReceiveMessageEvents.AllowChat,
     @Override
     public boolean allowReceiveChatMessage(Text message, SignedMessage signedMessage, GameProfile sender, MessageType.Parameters parameters, java.time.Instant instant) {
         if (!TranslatorMod.isEnabled()) {
-            return true; // Laisser passer le message sans modification
+            return true; // Laisser passer le message original
         }
         
         // Ne pas modifier les messages déjà traduits ou messages système
@@ -64,57 +64,54 @@ public class ChatMessageHandler implements ClientReceiveMessageEvents.AllowChat,
         // Créer le message modifié avec le bouton de traduction
         Text modifiedMessage = injectTranslateButton(message, messageId);
         
-        // Réinjecter le message modifié
+        // Ajouter notre message modifié
         MinecraftClient client = MinecraftClient.getInstance();
         if (client != null && client.inGameHud != null && client.inGameHud.getChatHud() != null) {
             client.inGameHud.getChatHud().addMessage(modifiedMessage);
         }
         
-        // Annuler le message original (on a déjà ajouté notre version modifiée)
+        // Annuler le message original (return false = ne pas afficher l'original)
+        // Notre version modifiée vient d'être ajoutée à la place
         return false;
     }
     
     @Override
-    public boolean allowReceiveGameMessage(Text message, boolean overlay) {
+    public void onReceiveGameMessage(Text message, boolean overlay) {
         if (!TranslatorMod.isEnabled()) {
-            return true;
+            return;
         }
         
-        // Ne pas ajouter de bouton aux messages déjà traduits ou aux messages système
+        // Pour les messages GAME (système), on ne peut pas les annuler facilement
+        // On ajoute juste le bouton si ce n'est pas un message système
         if (isTranslatedMessage(message) || isSystemMessage(message)) {
-            return true;
+            return;
         }
         
-        // Extraire le texte brut du message
         String plainText = message.getString().trim();
         if (plainText.isEmpty() || plainText.length() < 2) {
-            return true;
+            return;
         }
         
-        // Créer un ID unique pour ce message
         UUID messageId = messageCache.putWithId(plainText);
         
-        // Créer le message modifié avec le bouton de traduction
-        Text modifiedMessage = injectTranslateButton(message, messageId);
-        
-        // Réinjecter le message modifié
         MinecraftClient client = MinecraftClient.getInstance();
         if (client != null && client.inGameHud != null && client.inGameHud.getChatHud() != null) {
-            client.inGameHud.getChatHud().addMessage(modifiedMessage);
+            client.inGameHud.getChatHud().addMessage(injectTranslateButton(message, messageId));
         }
-        
-        // Annuler le message original
-        return false;
     }
     
     public Text injectTranslateButton(Text originalMessage, java.util.UUID messageId) {
         String command = TRANSLATE_COMMAND_PREFIX + messageId.toString();
         
+        // En 1.21.1, le constructeur HoverEvent(Action, Object) existe toujours
+        // Pour SHOW_TEXT, l'Object attendu est un Text
+        HoverEvent hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to translate"));
+        
         MutableText translateButton = Text.literal(" " + TRANSLATE_ICON + " ")
             .setStyle(Style.EMPTY
                 .withColor(Formatting.AQUA)
                 .withBold(true)
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to translate")))
+                .withHoverEvent(hoverEvent)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command))
                 .withInsertion(command));
         
