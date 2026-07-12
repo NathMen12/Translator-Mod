@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public class ChatMessageHandler implements ClientReceiveMessageEvents.Chat, ClientReceiveMessageEvents.Game {
+public class ChatMessageHandler implements ClientReceiveMessageEvents.AllowChat, ClientReceiveMessageEvents.AllowGame {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatMessageHandler.class);
     private static final String TRANSLATE_COMMAND_PREFIX = "/translator translate ";
     private static final String TRANSLATE_ICON = "🌐";
@@ -28,45 +28,83 @@ public class ChatMessageHandler implements ClientReceiveMessageEvents.Chat, Clie
     private final MessageCache messageCache = new MessageCache();
     
     @Override
-    public void onReceiveChatMessage(Text message, SignedMessage signedMessage, GameProfile sender, MessageType.Parameters parameters, java.time.Instant instant) {
-        // L'interface attend GameProfile, on extrait l'UUID
-        java.util.UUID uuid = sender != null ? sender.getId() : null;
-        handleMessage(message, false, uuid);
-    }
-    
-    @Override
-    public void onReceiveGameMessage(Text message, boolean overlay) {
-        handleMessage(message, overlay, null);
-    }
-    
-    private void handleMessage(Text message, boolean overlay, java.util.UUID sender) {
+    public boolean allowReceiveChatMessage(Text message, SignedMessage signedMessage, GameProfile sender, MessageType.Parameters parameters, java.time.Instant instant) {
         if (!TranslatorMod.isEnabled()) {
-            return;
+            return true; // Laisser passer le message sans modification
         }
         
-        // Ne pas ajouter de bouton aux messages déjà traduits ou aux messages système
+        // Ne pas modifier les messages déjà traduits ou messages système
         if (isTranslatedMessage(message) || isSystemMessage(message)) {
-            return;
+            return true;
         }
         
         // Extraire le texte brut du message
         String plainText = message.getString().trim();
         if (plainText.isEmpty() || plainText.length() < 2) {
-            return;
+            return true;
         }
         
         // Ignorer nos propres messages envoyés (pas reçus)
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player != null && sender != null && sender.equals(player.getUuid())) {
-            return;
+        java.util.UUID senderUuid = null;
+        if (sender != null) {
+            try {
+                senderUuid = UUID.fromString(sender.toString());
+            } catch (Exception e) {
+                // Ignorer
+            }
+        }
+        if (player != null && senderUuid != null && senderUuid.equals(player.getUuid())) {
+            return true;
         }
         
         // Créer un ID unique pour ce message
         UUID messageId = messageCache.putWithId(plainText);
         
-        // Injecter le bouton de traduction dans le message
-        // Note: On ne peut pas modifier le message directement dans l'event Fabric
-        // On doit stocker l'association messageId -> message original pour le re-rendu
+        // Créer le message modifié avec le bouton de traduction
+        Text modifiedMessage = injectTranslateButton(message, messageId);
+        
+        // Réinjecter le message modifié
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client != null && client.inGameHud != null && client.inGameHud.getChatHud() != null) {
+            client.inGameHud.getChatHud().addMessage(modifiedMessage);
+        }
+        
+        // Annuler le message original (on a déjà ajouté notre version modifiée)
+        return false;
+    }
+    
+    @Override
+    public boolean allowReceiveGameMessage(Text message, boolean overlay) {
+        if (!TranslatorMod.isEnabled()) {
+            return true;
+        }
+        
+        // Ne pas ajouter de bouton aux messages déjà traduits ou aux messages système
+        if (isTranslatedMessage(message) || isSystemMessage(message)) {
+            return true;
+        }
+        
+        // Extraire le texte brut du message
+        String plainText = message.getString().trim();
+        if (plainText.isEmpty() || plainText.length() < 2) {
+            return true;
+        }
+        
+        // Créer un ID unique pour ce message
+        UUID messageId = messageCache.putWithId(plainText);
+        
+        // Créer le message modifié avec le bouton de traduction
+        Text modifiedMessage = injectTranslateButton(message, messageId);
+        
+        // Réinjecter le message modifié
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client != null && client.inGameHud != null && client.inGameHud.getChatHud() != null) {
+            client.inGameHud.getChatHud().addMessage(modifiedMessage);
+        }
+        
+        // Annuler le message original
+        return false;
     }
     
     public Text injectTranslateButton(Text originalMessage, java.util.UUID messageId) {
@@ -76,7 +114,7 @@ public class ChatMessageHandler implements ClientReceiveMessageEvents.Chat, Clie
             .setStyle(Style.EMPTY
                 .withColor(Formatting.AQUA)
                 .withBold(true)
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("translator.tooltip.translate")))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to translate")))
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command))
                 .withInsertion(command));
         
